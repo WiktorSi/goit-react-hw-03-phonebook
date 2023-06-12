@@ -13,13 +13,23 @@ const _ = require('lodash');
 export class App extends Component {
 
   state = {
-    contacts: [{id: 'id-1', name: 'Rosie Simpson', number: '459-12-56'},
-    {id: 'id-2', name: 'Hermione Kline', number: '443-89-12'},
-    {id: 'id-3', name: 'Eden Clements', number: '645-17-79'},
-    {id: 'id-4', name: 'Annie Copeland', number: '227-91-26'}],
+    contacts: [],
     name: '',
     filter: '',
     number: ''    
+  }
+
+  componentDidUpdate() {
+    localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+  }
+
+  componentDidMount() {
+    const contactList = JSON.parse(localStorage.getItem('contacts'));
+    if (!contactList) {
+      localStorage.setItem('contacts', JSON.stringify([]));
+    } else {
+      this.setState({ contacts: contactList });
+    }
   }
 
   handleChange = (e) => {
@@ -32,12 +42,19 @@ export class App extends Component {
    }, 300)
     
   getFilteredContacts = () => {
-    const { contacts, filter } = this.state
-    const filteredContacts = [...contacts];
+    const { filter } = this.state;
 
-    return filter ? (filteredContacts.filter(contact => contact.name.toLowerCase().includes(filter.toLocaleLowerCase()))) : contacts 
+    !JSON.parse(localStorage.getItem('contacts')) && localStorage.setItem('contacts', JSON.stringify([]))
+    
+    const contactList = JSON.parse(localStorage.getItem('contacts'))
+    const filteredContacts = [...contactList];
+    return filter ? (filteredContacts.filter(contact => contact.name.toLowerCase().includes(filter.toLocaleLowerCase()))) : contactList 
   }
 
+  sendContactsToLocalStorage = (list) => {
+
+    localStorage.setItem('contacts', JSON.stringify(list))
+  }
   
   handleSubmit = (e) => {
     e.preventDefault();
@@ -48,12 +65,14 @@ export class App extends Component {
       alert(name+' is already in contacts');
     }
     else {
-      this.setState({contacts: [...contacts, {
+        const contactsAfterAdd = [...contacts, {
         name: name,
         number: number,
         id: nanoid()
       }
-    ]});
+    ]
+      this.setState({contacts: contactsAfterAdd });
+      this.sendContactsToLocalStorage(contactsAfterAdd)
     };
         
     form.reset()
@@ -63,7 +82,8 @@ export class App extends Component {
     const { contacts } = this.state
     
     const contactsAfterDelete = contacts.filter(contact => contact.id !== id)
-    this.setState({contacts: contactsAfterDelete})    
+    this.setState({ contacts: contactsAfterDelete })
+    this.sendContactsToLocalStorage(contactsAfterDelete)
   }
 
   render() {  
